@@ -1,23 +1,11 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TRANSCODE_QUEUE } from './constants';
-import { TranscodeConsumer } from './transcode.consumer';
+import { ReportsModule } from './modules/reports/reports.module';
 
 @Module({
-  imports: [
-    BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
-    }),
-    BullModule.registerQueue({
-      name: TRANSCODE_QUEUE,
-    }),
-  ],
+  imports: [ReportsModule],
   controllers: [AppController],
-  providers: [AppService, TranscodeConsumer],
+  providers: [AppService],
 })
 export class AppModule {}
