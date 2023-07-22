@@ -11,9 +11,7 @@ export class ReportsController {
   }
 
   @Post('build')
-  async start(
-    @Body() body: { dateBegin: string; dateEnd: string },
-  ): Promise<void> {
+  async start(@Body() body: { dateBegin: string; dateEnd: string }): Promise<void> {
     this.reportsService.build(body.dateBegin, body.dateEnd);
   }
 }
