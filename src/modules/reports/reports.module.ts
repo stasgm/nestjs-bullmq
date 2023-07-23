@@ -4,22 +4,11 @@ import { ReportsController } from './reports.controller';
 import { BullModule } from '@nestjs/bullmq';
 import { QUEUE_NAME } from './queues/reports.constants';
 import { ReportBuilderProcessor } from './queues/reports.processor';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
-      defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
-      },
-    }),
+    MailModule,
     BullModule.registerQueue({
       name: QUEUE_NAME,
     }),

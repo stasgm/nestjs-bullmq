@@ -5,7 +5,7 @@ import { QUEUE_NAME } from './queues/reports.constants';
 
 @Injectable()
 export class ReportsService {
-  constructor(@InjectQueue(QUEUE_NAME) private readonly reports: Queue) {}
+  constructor(@InjectQueue(QUEUE_NAME) private readonly reportsQueue: Queue) {}
 
   async getAll() {
     return [
@@ -18,16 +18,11 @@ export class ReportsService {
     ];
   }
 
-  async build(dateBegin: string, dateEnd: string) {
-    await this.reports.add(
-      'reports',
-      {
-        dateBegin,
-        dateEnd,
-      },
-      {
-        attempts: 5,
-      },
-    );
+  async build(dateBegin: string, dateEnd: string, fail = false) {
+    await this.reportsQueue.add('reports', {
+      dateBegin,
+      dateEnd,
+      fail,
+    });
   }
 }
