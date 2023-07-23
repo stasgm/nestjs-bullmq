@@ -57,7 +57,7 @@ export class ReportBuilderProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('completed')
-  async onCompleted({ id, data }: { id: string; data: number | object }) {
+  async onCompleted({ id, data }: { id: string; data: { dateBegin: string; dateEnd: string } }) {
     const user: { email: string; name: string } = {
       email: 'stasgm@getMaxListeners.com',
       name: 'Stas',
@@ -65,12 +65,12 @@ export class ReportBuilderProcessor extends WorkerHost {
 
     this.logger.log(`Completed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
 
-    await this.mailerService.sendMail(user, { reportInfo: data.toLocaleString() });
+    await this.mailerService.sendMail(user, { dateBegin: data.dateBegin, dateEnd: data.dateEnd });
     this.logger.log(`Email job added to queue: ${JSON.stringify(user)}`);
   }
 
   @OnWorkerEvent('failed')
   onFailed({ id, data }: { id: string; data: number | object }) {
-    this.logger.log(`Failed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+    this.logger.error(`Failed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
   }
 }

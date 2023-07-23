@@ -14,6 +14,7 @@ import { MailProcessor } from './queues/mail.processor';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
+        // transport: 'smtps://user@domain.com:pass@smtp.domain.com',
         transport: {
           host: configService.get('EMAIL_HOST'),
           port: +configService.get('EMAIL_PORT'),
@@ -24,7 +25,7 @@ import { MailProcessor } from './queues/mail.processor';
           },
           tls: { rejectUnauthorized: false },
         },
-        defaults: { from: '"NestJS Mailer" <test@test.com>' },
+        defaults: { from: '"No reply" <noreply@localhost>' },
         template: {
           dir: __dirname + '/templates',
           adapter: new HandlebarsAdapter(),
@@ -36,7 +37,7 @@ import { MailProcessor } from './queues/mail.processor';
       name: QUEUE_NAME,
     }),
   ],
-  providers: [MailService, MailProcessor],
+  providers: [MailService, MailProcessor, ConfigService],
   exports: [MailService],
 })
 export class MailModule {}

@@ -15,6 +15,10 @@ import { z } from 'zod';
       envFilePath: `${process.env.NODE_ENV ?? ''}.env`,
       validate: (config) => {
         const configValidationSchema = z.object({
+          // CLIENT_ID: z.string(),
+          // CLIENT_SECRET: z.string(),
+          // REFRESH_TOKEN: z.string(),
+          // EMAIL: z.string(),
           EMAIL_HOST: z.string(),
           EMAIL_PORT: z.string().transform((value) => parseInt(value)),
           EMAIL_ADDRESS: z.string(),

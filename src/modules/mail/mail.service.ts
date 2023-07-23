@@ -7,14 +7,16 @@ import { QUEUE_NAME } from './queues/mail.constants';
 export class MailService {
   constructor(@InjectQueue(QUEUE_NAME) private readonly mailQueue: Queue) {}
 
-  async sendMail(user: { email: string; name: string }, data: { reportInfo: string }) {
+  async sendMail(user: { email: string; name: string }, data: { dateBegin: string; dateEnd: string }) {
     await this.mailQueue.add('mailer', {
+      // transporterName: 'gmail',
       to: user.email,
       subject: 'Your report is ready',
-      template: 'ReportBuilt',
+      template: 'report-built',
       context: {
         name: user.name || user.email,
-        data,
+        dateBegin: data.dateBegin,
+        dateEnd: data.dateEnd,
       },
     });
   }
