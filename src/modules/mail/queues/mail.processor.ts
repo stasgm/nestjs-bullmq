@@ -1,18 +1,22 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Job } from 'bullmq';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger, forwardRef } from '@nestjs/common';
 import { google } from 'googleapis';
 import { Options } from 'nodemailer/lib/smtp-transport';
 
 import { QUEUE_NAME } from './mail.constants';
 import { ConfigService } from '@nestjs/config';
+import { ReportsService } from '../../reports/reports.service';
 
 @Processor(QUEUE_NAME)
 export class MailProcessor extends WorkerHost {
   private readonly logger: Logger = new Logger(MailProcessor.name);
 
   constructor(
+    // @Inject(forwardRef(() => ReportsService))
+    // private readonly reportsService: ReportsService,
     private readonly mailerService: MailerService,
     private readonly configService: ConfigService,
   ) {
@@ -22,9 +26,10 @@ export class MailProcessor extends WorkerHost {
   async process(job: Job<any, any, string>): Promise<any> {
     this.logger.log(`Sending email on ${QUEUE_NAME}, Job with id: ${job.id} and args: ${JSON.stringify(job.data)}`);
 
-    await this.setTransport();
+    // await this.setTransport();
     try {
-      await this.mailerService.sendMail(job.data);
+      // temporary disabled. Use flag to mock email sending
+      // await this.mailerService.sendMail(job.data);
     } catch (err) {
       this.logger.error(`Failed event on ${QUEUE_NAME}, Job with id: ${job.id}. ${JSON.stringify(err)}`);
       throw new Error(err);
@@ -33,6 +38,9 @@ export class MailProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   async onCompleted({ id, data }: { id: string; data: number | object }) {
+    // await this.reportsService.updateStatusByJobId(id, 'ready');
+    // set 'emailsend' flag
+
     this.logger.log(`Completed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
   }
 

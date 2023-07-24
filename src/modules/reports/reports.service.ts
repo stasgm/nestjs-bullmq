@@ -1,28 +1,66 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
+import { Report } from '@prisma/client';
+
 import { QUEUE_NAME } from './queues/reports.constants';
+import { ReportsRepository } from './reports.repository';
+import { CreateReportDto } from './dto/create-report.dto';
+import { UpdateReportDto } from './dto/update-report.dto';
+import { BuildReportDto } from './dto/build-report.dto';
 
 @Injectable()
 export class ReportsService {
-  constructor(@InjectQueue(QUEUE_NAME) private readonly reportsQueue: Queue) {}
+  constructor(
+    @InjectQueue(QUEUE_NAME) private readonly reportsQueue: Queue,
+    private productsRepository: ReportsRepository,
+  ) {}
 
-  async getAll() {
-    return [
-      {
-        id: '1',
-        name: 'test-report',
-        dateBegin: '2023-01-01',
-        dateEnd: '2023-07-01',
-      },
-    ];
+  findAll(): Promise<Report[]> {
+    return this.productsRepository.getReports({});
   }
 
-  async build(dateBegin: string, dateEnd: string, fail = false) {
-    await this.reportsQueue.add('reports', {
-      dateBegin,
-      dateEnd,
-      fail,
+  findById(id: string): Promise<Report | null> {
+    return this.productsRepository.getReport({ where: { id } });
+  }
+
+  create(createReportDto: CreateReportDto): Promise<Report> {
+    return this.productsRepository.createReport({ data: createReportDto });
+  }
+
+  update(id: string, updateReportDto: UpdateReportDto) {
+    return this.productsRepository.updateReport({
+      where: { id },
+      data: updateReportDto,
     });
+  }
+
+  remove(id: string) {
+    return this.productsRepository.deleteReport({ where: { id } });
+  }
+
+  updateStatusByJobId(jobId: string, status: string) {
+    return this.productsRepository.updateReport({
+      where: { jobId: jobId },
+      data: {
+        status,
+      },
+    });
+  }
+
+  async build(buildReportDto: BuildReportDto) {
+    const job = await this.reportsQueue.add('reports', buildReportDto);
+
+    await this.create({
+      name: job.data.name,
+      params: job.data.params,
+      jobId: job.id,
+      path: `./$job.data.name}-${job.id}`,
+    });
+  }
+
+  async stopBuild(id: string) {
+    const job = await this.reportsQueue.getJob(id);
+    job.discard();
   }
 }

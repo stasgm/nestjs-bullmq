@@ -1,24 +1,48 @@
 {
   "name": "nestjs-bullmq",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
   "private": true,
+  "description": "",
   "license": "UNLICENSED",
+  "author": "",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
-    "typecheck": "tsc --noEmit",
+    "postinstall": "pnpm run prisma:generate",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "migrate:deploy": "pnpm dlx prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:dev:create": "prisma migrate dev --create-only",
+    "migrate:reset": "prisma migrate reset",
+    "migrate:status": "pnpm dlx prisma migrate status",
+    "prisma:generate": "pnpm dlx prisma generate",
+    "start": "nest start",
+    "start:debug": "nest start --debug --watch",
+    "start:dev": "nest start --watch",
+    "start:prod": "node dist/main",
     "test": "jest",
-    "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:watch": "jest --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testEnvironment": "node",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    }
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^1.9.1",
@@ -28,11 +52,13 @@
     "@nestjs/core": "^9.4.3",
     "@nestjs/mapped-types": "^2.0.2",
     "@nestjs/platform-express": "^9.4.3",
+    "@prisma/client": "^5.0.0",
     "bullmq": "^4.6.0",
     "googleapis": "^122.0.0",
     "handlebars": "^4.7.7",
     "nestjs-zod": "^2.3.3",
     "nodemailer": "^6.9.4",
+    "prisma": "^5.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "zod": "^3.21.4"
@@ -60,22 +86,5 @@
     "ts-node": "^10.9.1",
     "tsconfig-paths": "4.2.0",
     "typescript": "^5.1.6"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
   }
 }

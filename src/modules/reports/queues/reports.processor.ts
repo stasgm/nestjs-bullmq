@@ -4,17 +4,28 @@ import { Logger } from '@nestjs/common';
 
 import { QUEUE_NAME } from './reports.constants';
 import { MailService } from '../../mail/mail.service';
+import { ReportsService } from '../reports.service';
 
 @Processor(QUEUE_NAME)
 export class ReportBuilderProcessor extends WorkerHost {
   private readonly logger: Logger = new Logger(ReportBuilderProcessor.name);
 
-  constructor(private readonly mailerService: MailService) {
+  constructor(
+    private readonly mailerService: MailService,
+    private readonly reportsService: ReportsService,
+  ) {
     super();
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
     this.logger.log(`Processing event on ${QUEUE_NAME}, Job with id: ${job.id} and args: ${JSON.stringify(job.data)}`);
+
+    // await this.reportsService.create({
+    //   name: '',
+    //   params: job.data,
+    //   jobId: job.id,
+    //   path: `./$job.data.name}-${job.id}`,
+    // });
 
     const fail = job.data.fail;
 
@@ -65,7 +76,10 @@ export class ReportBuilderProcessor extends WorkerHost {
 
     this.logger.log(`Completed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
 
+    await this.reportsService.updateStatusByJobId(id, 'ready');
+
     await this.mailerService.sendMail(user, { dateBegin: data.dateBegin, dateEnd: data.dateEnd });
+
     this.logger.log(`Email job added to queue: ${JSON.stringify(user)}`);
   }
 

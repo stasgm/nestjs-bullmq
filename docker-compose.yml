@@ -1,6 +1,22 @@
 services:
   redis:
+    container_name: redis-bullmq
     image: redis:7.0.12-alpine
     ports:
       - '${REDIS_PORT}:6379'
     command: redis-server --save 60 1 --loglevel warning
+
+  postgres:
+    image: postgres:13.5
+    container_name: postgres-bullmq
+    restart: always
+    ports:
+      - '${DB_PORT}:5432'
+    env_file:
+      - .env
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+volumes:
+  postgres:
+    name: nestjs-bullmq
