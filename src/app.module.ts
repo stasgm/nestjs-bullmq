@@ -21,6 +21,10 @@ import { z } from 'zod';
           GOOGLE_API_EMAIL: z.string(),
           REDIS_HOST: z.string(),
           REDIS_PORT: z.string().transform((value) => parseInt(value)),
+          MOCK_MAILILNG: z
+            .string()
+            .default('false')
+            .transform((value) => value.toUpperCase() === 'TRUE'),
         });
 
         return configValidationSchema.parse(config);

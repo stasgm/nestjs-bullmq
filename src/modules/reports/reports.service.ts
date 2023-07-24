@@ -9,6 +9,10 @@ import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { BuildReportDto } from './dto/build-report.dto';
 
+export interface ReportWithStatus extends Report {
+  progress: number;
+}
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -16,8 +20,16 @@ export class ReportsService {
     private productsRepository: ReportsRepository,
   ) {}
 
-  findAll(): Promise<Report[]> {
-    return this.productsRepository.getReports({});
+  async findAll(): Promise<ReportWithStatus[]> {
+    const reports = await this.productsRepository.getReports({});
+
+    const reportList: ReportWithStatus[] = [];
+    for await (const report of reports) {
+      const job = await this.reportsQueue.getJob(report.jobId);
+      reportList.push({ ...report, progress: job.progress as number });
+    }
+
+    return reportList;
   }
 
   findById(id: string): Promise<Report | null> {
@@ -28,18 +40,18 @@ export class ReportsService {
     return this.productsRepository.createReport({ data: createReportDto });
   }
 
-  update(id: string, updateReportDto: UpdateReportDto) {
+  update(id: string, updateReportDto: UpdateReportDto): Promise<Report | null> {
     return this.productsRepository.updateReport({
       where: { id },
       data: updateReportDto,
     });
   }
 
-  remove(id: string) {
+  remove(id: string): Promise<Report | null> {
     return this.productsRepository.deleteReport({ where: { id } });
   }
 
-  updateStatusByJobId(jobId: string, status: string) {
+  updateStatusByJobId(jobId: string, status: string): Promise<Report | null> {
     return this.productsRepository.updateReport({
       where: { jobId: jobId },
       data: {
@@ -48,18 +60,18 @@ export class ReportsService {
     });
   }
 
-  async build(buildReportDto: BuildReportDto) {
+  async build(buildReportDto: BuildReportDto): Promise<void> {
     const job = await this.reportsQueue.add('reports', buildReportDto);
 
     await this.create({
       name: job.data.name,
       params: job.data.params,
       jobId: job.id,
-      path: `./$job.data.name}-${job.id}`,
+      path: `./${job.data.name}-${job.id}`,
     });
   }
 
-  async stopBuild(id: string) {
+  async stopBuild(id: string): Promise<void> {
     const job = await this.reportsQueue.getJob(id);
     job.discard();
   }

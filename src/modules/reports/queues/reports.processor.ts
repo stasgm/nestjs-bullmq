@@ -6,6 +6,13 @@ import { QUEUE_NAME } from './reports.constants';
 import { MailService } from '../../mail/mail.service';
 import { ReportsService } from '../reports.service';
 
+type reportParamsT = {
+  name: string;
+  params: {
+    dateBegin: string;
+    dateEnd: string;
+  };
+};
 @Processor(QUEUE_NAME)
 export class ReportBuilderProcessor extends WorkerHost {
   private readonly logger: Logger = new Logger(ReportBuilderProcessor.name);
@@ -17,26 +24,18 @@ export class ReportBuilderProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<any, any, string>): Promise<any> {
+  async process(job: Job<reportParamsT, any, string>): Promise<any> {
     this.logger.log(`Processing event on ${QUEUE_NAME}, Job with id: ${job.id} and args: ${JSON.stringify(job.data)}`);
-
-    // await this.reportsService.create({
-    //   name: '',
-    //   params: job.data,
-    //   jobId: job.id,
-    //   path: `./$job.data.name}-${job.id}`,
-    // });
-
-    const fail = job.data.fail;
 
     const itemCount = 3;
     const steps = Array(itemCount).fill(0);
+    const delay = 4000;
 
     for await (const [idx, step] of steps.entries()) {
       try {
         await new Promise((resolve, reject) => {
           setTimeout(() => {
-            if (fail) {
+            if (job.data.name === '') {
               return reject(new Error('Failed'));
             }
 
@@ -45,7 +44,7 @@ export class ReportBuilderProcessor extends WorkerHost {
             job.updateProgress(progressPercent);
 
             return resolve(`Success: ${step}`);
-          }, 1000);
+          }, delay);
         });
       } catch (err) {
         throw new Error(err);
@@ -54,21 +53,21 @@ export class ReportBuilderProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('active')
-  onActive({ id, data }: { id: string; data: number | object }) {
+  async onActive({ id, data }: { id: string; data: object }) {
     this.logger.log(`Active event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+
+    await this.reportsService.updateStatusByJobId(id, 'in-progress');
   }
 
   @OnWorkerEvent('progress')
-  onProgress({ id, data }: { id: string; data: number | object }, progres: number | object) {
+  onProgress({ id, data }: { id: string; data: object }, progres: number) {
     this.logger.log(
-      `Event progress on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)} - ${
-        typeof progres === 'object' ? JSON.stringify(data) : progres
-      } `,
+      `Event progress on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)} - ${progres}`,
     );
   }
 
   @OnWorkerEvent('completed')
-  async onCompleted({ id, data }: { id: string; data: { dateBegin: string; dateEnd: string } }) {
+  async onCompleted({ id, data }: { id: string; data: reportParamsT }) {
     const user: { email: string; name: string } = {
       email: 'stasgm@gmail.com',
       name: 'Stas',
@@ -76,15 +75,17 @@ export class ReportBuilderProcessor extends WorkerHost {
 
     this.logger.log(`Completed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
 
-    await this.reportsService.updateStatusByJobId(id, 'ready');
+    await this.reportsService.updateStatusByJobId(id, 'completed');
 
-    await this.mailerService.sendMail(user, { dateBegin: data.dateBegin, dateEnd: data.dateEnd });
+    await this.mailerService.sendMail(user, data);
 
-    this.logger.log(`Email job added to queue: ${JSON.stringify(user)}`);
+    this.logger.log(`Email job added to the mail queue: ${JSON.stringify(user)}`);
   }
 
   @OnWorkerEvent('failed')
-  onFailed({ id, data }: { id: string; data: number | object }) {
+  async onFailed({ id, data }: { id: string; data: number | object }) {
     this.logger.error(`Failed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+
+    await this.reportsService.updateStatusByJobId(id, 'failed');
   }
 }

@@ -6,6 +6,7 @@ import { BuildReportDto } from './dto/build-report.dto';
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
+  @Get()
   findAll() {
     return this.reportsService.findAll();
   }
@@ -28,15 +29,11 @@ export class ReportsController {
 
   @Post('build')
   async start(@Body() body: BuildReportDto): Promise<void> {
-    this.reportsService.build({
-      params: body.params,
-      name: body.name,
-      fail: body.fail,
-    });
+    this.reportsService.build(body);
   }
 
-  @Delete('stop-building')
-  post(@Param('id') id: string) {
-    return this.reportsService.remove(id);
+  @Post('stop-building')
+  stopBuilidng(@Param('id') id: string) {
+    this.reportsService.remove(id);
   }
 }

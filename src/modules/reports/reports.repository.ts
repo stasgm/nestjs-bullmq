@@ -39,7 +39,7 @@ export class ReportsRepository {
         params: data.params,
         path: data.path,
         jobId: data.jobId,
-        status: 'in-progress',
+        status: 'created',
       },
     });
   }
