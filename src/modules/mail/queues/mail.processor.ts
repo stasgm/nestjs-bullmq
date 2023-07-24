@@ -22,8 +22,13 @@ export class MailProcessor extends WorkerHost {
   async process(job: Job<any, any, string>): Promise<any> {
     this.logger.log(`Sending email on ${QUEUE_NAME}, Job with id: ${job.id} and args: ${JSON.stringify(job.data)}`);
 
-    // await this.setTransport();
-    await this.mailerService.sendMail(job.data);
+    await this.setTransport();
+    try {
+      await this.mailerService.sendMail(job.data);
+    } catch (err) {
+      this.logger.error(`Failed event on ${QUEUE_NAME}, Job with id: ${job.id}. ${JSON.stringify(err)}`);
+      throw new Error(err);
+    }
   }
 
   @OnWorkerEvent('completed')
@@ -39,13 +44,13 @@ export class MailProcessor extends WorkerHost {
   private async setTransport() {
     const OAuth2 = google.auth.OAuth2;
     const oauth2Client = new OAuth2({
-      clientId: this.configService.get('CLIENT_ID'),
-      clientSecret: this.configService.get('CLIENT_SECRET'),
+      clientId: this.configService.get('GOOGLE_API_CLIENT_ID'),
+      clientSecret: this.configService.get('GOOGLE_API_CLIENT_SECRET'),
       redirectUri: 'https://developers.google.com/oauthplayground',
     });
 
     oauth2Client.setCredentials({
-      refresh_token: process.env.REFRESH_TOKEN,
+      refresh_token: this.configService.get('GOOGLE_API_REFRESH_TOKEN'),
     });
 
     const accessToken: string = await new Promise((resolve, reject) => {
@@ -61,9 +66,9 @@ export class MailProcessor extends WorkerHost {
       service: 'gmail',
       auth: {
         type: 'OAuth2',
-        user: this.configService.get('EMAIL'),
-        clientId: this.configService.get('CLIENT_ID'),
-        clientSecret: this.configService.get('CLIENT_SECRET'),
+        user: this.configService.get('GOOGLE_API_EMAIL'),
+        clientId: this.configService.get('GOOGLE_CLIENT_ID'),
+        clientSecret: this.configService.get('GOOGLE_CLIENT_SECRET'),
         accessToken,
       },
     };

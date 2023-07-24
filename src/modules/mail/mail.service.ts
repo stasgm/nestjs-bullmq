@@ -9,7 +9,7 @@ export class MailService {
 
   async sendMail(user: { email: string; name: string }, data: { dateBegin: string; dateEnd: string }) {
     await this.mailQueue.add('mailer', {
-      // transporterName: 'gmail',
+      transporterName: 'gmail',
       to: user.email,
       subject: 'Your report is ready',
       template: 'report-built',

@@ -59,7 +59,7 @@ export class ReportBuilderProcessor extends WorkerHost {
   @OnWorkerEvent('completed')
   async onCompleted({ id, data }: { id: string; data: { dateBegin: string; dateEnd: string } }) {
     const user: { email: string; name: string } = {
-      email: 'stasgm@getMaxListeners.com',
+      email: 'stasgm@gmail.com',
       name: 'Stas',
     };
 
