@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
-import { QUEUE_NAME } from './queues/mail.constants';
+import { MAIL_QUEUE } from './queues/mail.constants';
 
 interface IMailData {
   name: string;
@@ -9,7 +9,7 @@ interface IMailData {
 }
 @Injectable()
 export class MailService {
-  constructor(@InjectQueue(QUEUE_NAME) private readonly mailQueue: Queue) {}
+  constructor(@InjectQueue(MAIL_QUEUE) private readonly mailQueue: Queue) {}
 
   async sendMail(user: { email: string; name: string }, data: IMailData) {
     await this.mailQueue.add('mailer', {

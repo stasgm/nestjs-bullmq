@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Job } from 'bullmq';
@@ -6,10 +5,10 @@ import { Logger } from '@nestjs/common';
 import { google } from 'googleapis';
 import { Options } from 'nodemailer/lib/smtp-transport';
 
-import { QUEUE_NAME } from './mail.constants';
+import { MAIL_QUEUE } from './mail.constants';
 import { ConfigService } from '@nestjs/config';
 
-@Processor(QUEUE_NAME)
+@Processor(MAIL_QUEUE)
 export class MailProcessor extends WorkerHost {
   private readonly logger: Logger = new Logger(MailProcessor.name);
 
@@ -21,7 +20,7 @@ export class MailProcessor extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<void> {
-    this.logger.log(`Sending email on ${QUEUE_NAME}, Job with id: ${job.id} and args: ${JSON.stringify(job.data)}`);
+    this.logger.log(`Sending email on ${MAIL_QUEUE}, Job with id: ${job.id} and args: ${JSON.stringify(job.data)}`);
 
     if (this.configService.get('MOCK_MAILILNG') === true) {
       return;
@@ -31,7 +30,7 @@ export class MailProcessor extends WorkerHost {
     try {
       await this.mailerService.sendMail(job.data);
     } catch (err) {
-      this.logger.error(`Failed event on ${QUEUE_NAME}, Job with id: ${job.id}. ${JSON.stringify(err)}`);
+      this.logger.error(`Failed event on ${MAIL_QUEUE}, Job with id: ${job.id}. ${JSON.stringify(err)}`);
       throw new Error(err);
     }
   }
@@ -40,12 +39,12 @@ export class MailProcessor extends WorkerHost {
   async onCompleted({ id, data }: { id: string; data: object }) {
     // set 'emailsend' flag for the corresponding entry in the reports table
 
-    this.logger.log(`Completed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+    this.logger.log(`Completed event on ${MAIL_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
   }
 
   @OnWorkerEvent('failed')
   onFailed({ id, data }: { id: string; data: number | object }) {
-    this.logger.error(`Failed event on ${QUEUE_NAME}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+    this.logger.error(`Failed event on ${MAIL_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
   }
 
   private async setTransport() {

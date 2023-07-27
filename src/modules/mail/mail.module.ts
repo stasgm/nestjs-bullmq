@@ -5,7 +5,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { MailService } from './mail.service';
-import { QUEUE_NAME } from './queues/mail.constants';
+import { MAIL_QUEUE } from './queues/mail.constants';
 import { MailProcessor } from './queues/mail.processor';
 
 @Module({
@@ -24,7 +24,7 @@ import { MailProcessor } from './queues/mail.processor';
       }),
     }),
     BullModule.registerQueue({
-      name: QUEUE_NAME,
+      name: MAIL_QUEUE,
     }),
   ],
   providers: [MailService, MailProcessor, ConfigService],

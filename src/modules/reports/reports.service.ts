@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { Report } from '@prisma/client';
 
-import { QUEUE_NAME } from './queues/reports.constants';
+import { REPORT_BUILDER_QUEUE } from './queues/reports.constants';
 import { ReportsRepository } from './reports.repository';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -16,7 +16,7 @@ export interface ReportWithStatus extends Report {
 @Injectable()
 export class ReportsService {
   constructor(
-    @InjectQueue(QUEUE_NAME) private readonly reportsQueue: Queue,
+    @InjectQueue(REPORT_BUILDER_QUEUE) private readonly reportsQueue: Queue,
     private productsRepository: ReportsRepository,
   ) {}
 
@@ -26,7 +26,9 @@ export class ReportsService {
     const reportList: ReportWithStatus[] = [];
     for await (const report of reports) {
       const job = await this.reportsQueue.getJob(report.jobId);
-      reportList.push({ ...report, progress: job.progress as number });
+      if (job) {
+        reportList.push({ ...report, progress: job.progress as number });
+      }
     }
 
     return reportList;

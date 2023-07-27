@@ -1,1 +1,1 @@
-export const QUEUE_NAME = 'MAIL';
+export const MAIL_QUEUE = 'MAIL-QUEUE';
