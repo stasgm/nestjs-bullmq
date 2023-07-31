@@ -6,7 +6,7 @@ import { REPORT_BUILDER_QUEUE } from './reports.constants';
 import { MailService } from '../../mail/mail.service';
 import { ReportsService } from '../reports.service';
 
-type reportParamsT = {
+export type reportParamsT = {
   name: string;
   params: {
     dateBegin: string;

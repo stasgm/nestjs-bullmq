@@ -1,0 +1,37 @@
+{
+  "forceExit": true,
+  "testTimeout": 15000,
+  "detectOpenHandles": true,
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": "./",
+  "modulePaths": [
+    "<rootDir>"
+  ],
+  "testRegex": ".*\\.spec\\.ts$",
+  "transform": {
+    "^.+\\.(ts|js)?$": [
+      "@swc/jest"
+    ]
+  },
+  "collectCoverageFrom": [
+    "src/**/*.(t|j)s"
+  ],
+  "coveragePathIgnorePatterns": [
+    "app-config.ts",
+    "setup-swagger.ts",
+    "node_modules",
+    "test-config",
+    "interfaces",
+    "jestGlobalMocks.ts",
+    ".module.ts",
+    "<rootDir>/src/main.ts",
+    ".mock.ts"
+  ],
+  "coverageDirectory": "<rootDir>/coverage",
+  "reporters": [ "default"],
+  "testEnvironment": "node"
+}

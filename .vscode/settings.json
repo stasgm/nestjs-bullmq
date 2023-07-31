@@ -5,5 +5,4 @@
   "jest.showCoverageOnLoad": false,
   "json.schemaDownload.enable": true,
   "json.validate.enable": false,
-
 }
