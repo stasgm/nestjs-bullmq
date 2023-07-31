@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { Report } from '@prisma/client';
 
-import { REPORT_BUILDER_QUEUE } from './queues/reports.constants';
+import { REPORT_BUILDER_JOB, REPORT_BUILDER_QUEUE } from './queues/reports.constants';
 import { ReportsRepository } from './reports.repository';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -63,7 +63,7 @@ export class ReportsService {
   }
 
   async build(buildReportDto: BuildReportDto): Promise<void> {
-    const job = await this.reportsQueue.add('reports', buildReportDto);
+    const job = await this.reportsQueue.add(REPORT_BUILDER_JOB, buildReportDto);
 
     await this.create({
       name: job.data.name,

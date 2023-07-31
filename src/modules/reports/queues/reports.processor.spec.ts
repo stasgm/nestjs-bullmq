@@ -81,18 +81,21 @@ describe('Reports processor', () => {
 
   it('should process the new job in the report queue', async () => {
     reportsService.updateStatusByJobId.mockResolvedValue(reportJobResponseMock);
-
     reportsQueue.add.mockResolvedValue(reportJob);
+
     const job = await reportsQueue.add('reports', reportJobData);
+    const jobUpdateProgressSpy = jest.spyOn(job, 'updateProgress');
 
     expect(job.progress).toEqual(0);
     await reportBuilderProcessor.process(job);
     expect(job.progress).toEqual(100);
 
-    expect(job.updateProgress).toHaveBeenCalledTimes(5);
+    expect(jobUpdateProgressSpy).toHaveBeenCalledTimes(3);
+    expect(jobUpdateProgressSpy).toHaveBeenLastCalledWith(100);
 
     await reportBuilderProcessor.onCompleted({ id: job.id, data: job.data });
 
     expect(reportsService.updateStatusByJobId).toHaveBeenCalledTimes(1);
+    expect(reportsService.updateStatusByJobId).toHaveBeenCalledWith(job.id, 'completed');
   });
 });

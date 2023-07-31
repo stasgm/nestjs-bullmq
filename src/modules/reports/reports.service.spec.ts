@@ -7,24 +7,38 @@ import { Report } from '@prisma/client';
 import { ReportsService } from './reports.service';
 import { REPORT_BUILDER_QUEUE } from './queues/reports.constants';
 import { ReportsRepository } from './reports.repository';
+import { reportParamsT } from './queues/reports.processor';
 
-const reportMock: Report = {
+const reportDataMock: Report = {
   id: '1',
   jobId: '1',
   name: 'my-job',
-  params: {},
-  path: '',
+  params: {
+    dateBegin: '2023-07-01',
+    dateEnd: '2023-07-18',
+  },
+  path: 'my-job-1',
   status: 'complete',
 };
 
-const queueMock = {
+const reportJobData: { id: string; data: reportParamsT } = {
   id: '1',
   data: {
     name: 'my-job',
-    params: {},
+    params: {
+      dateBegin: '2023-07-01',
+      dateEnd: '2023-07-18',
+    },
   },
-  progress: 0,
 };
+
+const reportJob = {
+  ...reportJobData,
+  progress: 0,
+  updateProgress: async (progress) => {
+    reportJob.progress = progress;
+  },
+} as Job;
 
 describe('Reports Service', () => {
   let service: ReportsService;
@@ -54,10 +68,10 @@ describe('Reports Service', () => {
   });
 
   it('should add a new job to the reports queue', async () => {
-    repository.createReport.mockResolvedValue(reportMock);
-    queue.add.mockResolvedValue(queueMock as Job<any, any, string>);
+    repository.createReport.mockResolvedValue(reportDataMock);
+    queue.add.mockResolvedValue(reportJob);
 
-    await service.build({ name: 'report-1', params: {} });
+    await service.build({ name: 'report-1', params: reportJobData });
     expect(queue.add).toHaveBeenCalledTimes(1);
   });
 });
