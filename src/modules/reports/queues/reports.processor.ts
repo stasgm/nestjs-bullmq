@@ -76,7 +76,9 @@ export class ReportsBuilderProcessor extends WorkerHost {
       name: 'Stas',
     };
 
-    this.logger.log(`Completed event on ${REPORTS_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+    this.logger.log(
+      `Completed event on ${REPORTS_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`,
+    );
 
     await this.reportsService.updateStatusByJobId(id, 'completed');
 
