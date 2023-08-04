@@ -6,9 +6,9 @@ import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { Report } from '@prisma/client';
 
 import { ReportsService } from './reports.service';
-import { REPORT_BUILDER_QUEUE } from './queues/reports.constants';
+import { REPORTS_BUILDER_QUEUE } from './queues/reports.constants';
 import { ReportsRepository } from './reports.repository';
-import { ReportBuilderProcessor, reportParamsT } from './queues/reports.processor';
+import { ReportsBuilderProcessor, reportParamsT } from './queues/reports.processor';
 import { MailModule } from '../mail/mail.module';
 import { MailService } from '../mail/mail.service';
 
@@ -72,9 +72,9 @@ describe('Reports Service', () => {
             },
           }),
         }),
-        BullModule.registerQueue({ name: REPORT_BUILDER_QUEUE }),
+        BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE }),
       ],
-      providers: [ReportsService, ReportsRepository, ReportBuilderProcessor],
+      providers: [ReportsService, ReportsRepository, ReportsBuilderProcessor],
     })
       .overrideProvider(ReportsRepository)
       .useValue(mockDeep<ReportsRepository>())
@@ -84,7 +84,7 @@ describe('Reports Service', () => {
 
     service = module.get(ReportsService);
     repository = module.get(ReportsRepository);
-    queue = module.get(getQueueToken(REPORT_BUILDER_QUEUE));
+    queue = module.get(getQueueToken(REPORTS_BUILDER_QUEUE));
   });
 
   afterEach(() => {
