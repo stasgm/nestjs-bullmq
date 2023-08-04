@@ -5,10 +5,10 @@ import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { Report } from '@prisma/client';
 
 import { ReportsService } from '../reports.service';
-import { REPORT_BUILDER_QUEUE } from '../queues/reports.constants';
+import { REPORTS_BUILDER_QUEUE } from '../queues/reports.constants';
 import { MailService } from '../../mail/mail.service';
 import { MAIL_QUEUE } from '../../mail/queues/mail.constants';
-import { ReportBuilderProcessor, reportParamsT } from './reports.processor';
+import { ReportsBuilderProcessor, reportParamsT } from './reports.processor';
 
 const reportJobResponseMock: Report = {
   id: '1',
@@ -44,19 +44,19 @@ const reportJob = {
 describe('Reports processor', () => {
   let reportsService: DeepMockProxy<ReportsService>;
   let reportsQueue: DeepMockProxy<Queue>;
-  let reportBuilderProcessor: ReportBuilderProcessor;
+  let ReportsBuilderProcessor: ReportsBuilderProcessor;
   let mailService: DeepMockProxy<MailService>;
   let mailQueue: DeepMockProxy<Queue>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        BullModule.registerQueue({ name: REPORT_BUILDER_QUEUE }),
+        BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE }),
         BullModule.registerQueue({ name: MAIL_QUEUE }),
       ],
-      providers: [ReportsService, ReportBuilderProcessor, MailService],
+      providers: [ReportsService, ReportsBuilderProcessor, MailService],
     })
-      .overrideProvider(getQueueToken(REPORT_BUILDER_QUEUE))
+      .overrideProvider(getQueueToken(REPORTS_BUILDER_QUEUE))
       .useValue(mockDeep<Queue>())
       .overrideProvider(ReportsService)
       .useValue(mockDeep<ReportsService>())
@@ -65,8 +65,8 @@ describe('Reports processor', () => {
       .compile();
 
     reportsService = module.get(ReportsService);
-    reportsQueue = module.get(getQueueToken(REPORT_BUILDER_QUEUE));
-    reportBuilderProcessor = module.get(ReportBuilderProcessor);
+    reportsQueue = module.get(getQueueToken(REPORTS_BUILDER_QUEUE));
+    ReportsBuilderProcessor = module.get(ReportsBuilderProcessor);
     mailService = module.get(MailService);
     mailQueue = module.get(getQueueToken(MAIL_QUEUE));
   });
@@ -74,7 +74,7 @@ describe('Reports processor', () => {
   it('should be defined', () => {
     expect(reportsService).toBeDefined();
     expect(reportsQueue).toBeDefined();
-    expect(reportBuilderProcessor).toBeDefined();
+    expect(ReportsBuilderProcessor).toBeDefined();
     expect(mailService).toBeDefined();
     expect(mailQueue).toBeDefined();
   });
@@ -87,13 +87,13 @@ describe('Reports processor', () => {
     const jobUpdateProgressSpy = jest.spyOn(job, 'updateProgress');
 
     expect(job.progress).toEqual(0);
-    await reportBuilderProcessor.process(job);
+    await ReportsBuilderProcessor.process(job);
     expect(job.progress).toEqual(100);
 
     expect(jobUpdateProgressSpy).toHaveBeenCalledTimes(3);
     expect(jobUpdateProgressSpy).toHaveBeenLastCalledWith(100);
 
-    await reportBuilderProcessor.onCompleted({ id: job.id, data: job.data });
+    await ReportsBuilderProcessor.onCompleted({ id: job.id, data: job.data });
 
     expect(reportsService.updateStatusByJobId).toHaveBeenCalledTimes(1);
     expect(reportsService.updateStatusByJobId).toHaveBeenCalledWith(job.id, 'completed');

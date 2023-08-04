@@ -5,7 +5,7 @@ import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { Report } from '@prisma/client';
 
 import { ReportsService } from './reports.service';
-import { REPORT_BUILDER_QUEUE } from './queues/reports.constants';
+import { REPORTS_BUILDER_QUEUE } from './queues/reports.constants';
 import { ReportsRepository } from './reports.repository';
 import { reportParamsT } from './queues/reports.processor';
 
@@ -47,18 +47,18 @@ describe('Reports Service', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [BullModule.registerQueue({ name: REPORT_BUILDER_QUEUE })],
+      imports: [BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE })],
       providers: [ReportsService, ReportsRepository],
     })
       .overrideProvider(ReportsRepository)
       .useValue(mockDeep<ReportsRepository>())
-      .overrideProvider(getQueueToken(REPORT_BUILDER_QUEUE))
+      .overrideProvider(getQueueToken(REPORTS_BUILDER_QUEUE))
       .useValue(mockDeep<Queue>())
       .compile();
 
     service = module.get(ReportsService);
     repository = module.get(ReportsRepository);
-    queue = module.get(getQueueToken(REPORT_BUILDER_QUEUE));
+    queue = module.get(getQueueToken(REPORTS_BUILDER_QUEUE));
   });
 
   it('should be defined', () => {

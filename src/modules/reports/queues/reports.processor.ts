@@ -2,7 +2,7 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 
-import { REPORT_BUILDER_QUEUE } from './reports.constants';
+import { REPORTS_BUILDER_QUEUE } from './reports.constants';
 import { MailService } from '../../mail/mail.service';
 import { ReportsService } from '../reports.service';
 
@@ -14,9 +14,9 @@ export type reportParamsT = {
   };
 };
 
-@Processor(REPORT_BUILDER_QUEUE)
-export class ReportBuilderProcessor extends WorkerHost {
-  private readonly logger: Logger = new Logger(ReportBuilderProcessor.name);
+@Processor(REPORTS_BUILDER_QUEUE)
+export class ReportsBuilderProcessor extends WorkerHost {
+  private readonly logger: Logger = new Logger(ReportsBuilderProcessor.name);
 
   constructor(
     private readonly mailerService: MailService,
@@ -27,7 +27,7 @@ export class ReportBuilderProcessor extends WorkerHost {
 
   async process(job: Job<reportParamsT, any, string>): Promise<any> {
     this.logger.log(
-      `Processing event on ${REPORT_BUILDER_QUEUE}, Job with id: ${job.id} and args: ${JSON.stringify(job.data)}`,
+      `Processing event on ${REPORTS_BUILDER_QUEUE}, Job with id: ${job.id} and args: ${JSON.stringify(job.data)}`,
     );
 
     const itemCount = 3;
@@ -57,7 +57,7 @@ export class ReportBuilderProcessor extends WorkerHost {
 
   @OnWorkerEvent('active')
   async onActive({ id, data }: { id: string; data: object }) {
-    this.logger.log(`Active event on ${REPORT_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+    this.logger.log(`Active event on ${REPORTS_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
 
     await this.reportsService.updateStatusByJobId(id, 'in-progress');
   }
@@ -65,7 +65,7 @@ export class ReportBuilderProcessor extends WorkerHost {
   @OnWorkerEvent('progress')
   onProgress({ id, data }: { id: string; data: object }, progres: number) {
     this.logger.log(
-      `Event progress on ${REPORT_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)} - ${progres}`,
+      `Event progress on ${REPORTS_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)} - ${progres}`,
     );
   }
 
@@ -76,7 +76,7 @@ export class ReportBuilderProcessor extends WorkerHost {
       name: 'Stas',
     };
 
-    this.logger.log(`Completed event on ${REPORT_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+    this.logger.log(`Completed event on ${REPORTS_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
 
     await this.reportsService.updateStatusByJobId(id, 'completed');
 
@@ -87,7 +87,7 @@ export class ReportBuilderProcessor extends WorkerHost {
 
   @OnWorkerEvent('failed')
   async onFailed({ id, data }: { id: string; data: number | object }) {
-    this.logger.error(`Failed event on ${REPORT_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+    this.logger.error(`Failed event on ${REPORTS_BUILDER_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
 
     await this.reportsService.updateStatusByJobId(id, 'failed');
   }
