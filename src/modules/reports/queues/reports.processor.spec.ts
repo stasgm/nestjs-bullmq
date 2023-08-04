@@ -44,7 +44,7 @@ const reportJob = {
 describe('Reports processor', () => {
   let reportsService: DeepMockProxy<ReportsService>;
   let reportsQueue: DeepMockProxy<Queue>;
-  let ReportsBuilderProcessor: ReportsBuilderProcessor;
+  let reportsBuilderProcessor: ReportsBuilderProcessor;
   let mailService: DeepMockProxy<MailService>;
   let mailQueue: DeepMockProxy<Queue>;
 
@@ -66,7 +66,7 @@ describe('Reports processor', () => {
 
     reportsService = module.get(ReportsService);
     reportsQueue = module.get(getQueueToken(REPORTS_BUILDER_QUEUE));
-    ReportsBuilderProcessor = module.get(ReportsBuilderProcessor);
+    reportsBuilderProcessor = module.get(ReportsBuilderProcessor);
     mailService = module.get(MailService);
     mailQueue = module.get(getQueueToken(MAIL_QUEUE));
   });
@@ -74,7 +74,7 @@ describe('Reports processor', () => {
   it('should be defined', () => {
     expect(reportsService).toBeDefined();
     expect(reportsQueue).toBeDefined();
-    expect(ReportsBuilderProcessor).toBeDefined();
+    expect(reportsBuilderProcessor).toBeDefined();
     expect(mailService).toBeDefined();
     expect(mailQueue).toBeDefined();
   });
@@ -87,13 +87,13 @@ describe('Reports processor', () => {
     const jobUpdateProgressSpy = jest.spyOn(job, 'updateProgress');
 
     expect(job.progress).toEqual(0);
-    await ReportsBuilderProcessor.process(job);
+    await reportsBuilderProcessor.process(job);
     expect(job.progress).toEqual(100);
 
     expect(jobUpdateProgressSpy).toHaveBeenCalledTimes(3);
     expect(jobUpdateProgressSpy).toHaveBeenLastCalledWith(100);
 
-    await ReportsBuilderProcessor.onCompleted({ id: job.id, data: job.data });
+    await reportsBuilderProcessor.onCompleted({ id: job.id, data: job.data });
 
     expect(reportsService.updateStatusByJobId).toHaveBeenCalledTimes(1);
     expect(reportsService.updateStatusByJobId).toHaveBeenCalledWith(job.id, 'completed');
