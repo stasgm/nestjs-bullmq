@@ -101,6 +101,8 @@ describe('Reports Service', () => {
     repository.createReport.mockResolvedValue(reportDataMock);
     const addJobToQueue = jest.spyOn(queue, 'add');
 
+    // TODO: check job status
+
     await service.build({ name: 'report-1', params: reportJobData });
     expect(addJobToQueue).toHaveBeenCalledTimes(1);
   });
