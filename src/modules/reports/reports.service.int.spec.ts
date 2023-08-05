@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { Job, Queue } from 'bullmq';
+import { Queue } from 'bullmq';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { Report } from '@prisma/client';
 
 import { ReportsService } from './reports.service';
-import { REPORTS_BUILDER_QUEUE } from './queues/reports.constants';
+import { REPORTS_BUILDER_QUEUE, REPORT_BUILDER_JOB } from './queues/reports.constants';
 import { ReportsRepository } from './reports.repository';
 import { ReportsBuilderProcessor, reportParamsT } from './queues/reports.processor';
 import { MailModule } from '../mail/mail.module';
@@ -35,13 +35,15 @@ const reportJobData: { id: string; data: reportParamsT } = {
   },
 };
 
-const reportJob = {
-  ...reportJobData,
-  progress: 0,
-  updateProgress: async (progress) => {
-    reportJob.progress = progress;
-  },
-} as Job;
+// const reportJob = {
+//   ...reportJobData,
+//   progress: 0,
+//   updateProgress: async (progress) => {
+//     reportJob.progress = progress;
+//   },
+// } as Job;
+
+const fakeProcessor = jest.fn();
 
 describe('Reports Service', () => {
   let service: ReportsService;
@@ -72,7 +74,7 @@ describe('Reports Service', () => {
             },
           }),
         }),
-        BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE }),
+        BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE, processors: [fakeProcessor] }),
       ],
       providers: [ReportsService, ReportsRepository, ReportsBuilderProcessor],
     })
@@ -80,6 +82,8 @@ describe('Reports Service', () => {
       .useValue(mockDeep<ReportsRepository>())
       .overrideProvider(MailService)
       .useValue(mockDeep<MailService>())
+      .overrideProvider(ReportsBuilderProcessor)
+      .useValue(mockDeep<ReportsBuilderProcessor>())
       .compile();
 
     service = module.get(ReportsService);
@@ -88,22 +92,46 @@ describe('Reports Service', () => {
   });
 
   afterEach(() => {
-    // Remove test queue
+    // Remove test queue data
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
     expect(repository).toBeDefined();
     expect(queue).toBeDefined();
+    expect(queue.name).toEqual(REPORTS_BUILDER_QUEUE);
   });
 
   it('should add a new job to the reports queue', async () => {
     repository.createReport.mockResolvedValue(reportDataMock);
     const addJobToQueue = jest.spyOn(queue, 'add');
 
-    // TODO: check job status
-
     await service.build({ name: 'report-1', params: reportJobData });
     expect(addJobToQueue).toHaveBeenCalledTimes(1);
+    expect(addJobToQueue).toHaveBeenCalledWith(REPORT_BUILDER_JOB, {
+      name: 'report-1',
+      params: reportJobData,
+    });
+  });
+
+  it('should proccess the new job with the given processors', async () => {
+    repository.createReport.mockResolvedValue(reportDataMock);
+    const addJobToQueue = jest.spyOn(queue, 'add');
+
+    const report = await service.build({ name: 'report-1', params: reportJobData });
+    expect(addJobToQueue).toHaveBeenCalledTimes(1);
+    expect(addJobToQueue).toHaveBeenCalledWith(REPORT_BUILDER_JOB, {
+      name: 'report-1',
+      params: reportJobData,
+    });
+
+    await Promise.resolve(() => {
+      setTimeout(async () => {
+        expect(fakeProcessor).toHaveBeenCalledTimes(1);
+      }, 1000);
+    });
+
+    const job = await queue.getJob(report.jobId);
+    await expect(job.getState()).resolves.toBe('completed');
   });
 });

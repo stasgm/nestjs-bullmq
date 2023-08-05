@@ -47,7 +47,7 @@ describe('Reports Service', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE })],
+      imports: [BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE, connection: {} })],
       providers: [ReportsService, ReportsRepository],
     })
       .overrideProvider(ReportsRepository)
@@ -65,6 +65,7 @@ describe('Reports Service', () => {
     expect(service).toBeDefined();
     expect(repository).toBeDefined();
     expect(queue).toBeDefined();
+    expect(queue.name).toEqual(REPORTS_BUILDER_QUEUE);
   });
 
   it('should add a new job to the reports queue', async () => {

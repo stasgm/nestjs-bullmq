@@ -5,7 +5,7 @@ import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
 import { Report } from '@prisma/client';
 
 import { ReportsService } from '../reports.service';
-import { REPORTS_BUILDER_QUEUE } from '../queues/reports.constants';
+import { REPORTS_BUILDER_QUEUE } from './reports.constants';
 import { MailService } from '../../mail/mail.service';
 import { MAIL_QUEUE } from '../../mail/queues/mail.constants';
 import { ReportsBuilderProcessor, reportParamsT } from './reports.processor';
@@ -51,8 +51,8 @@ describe('Reports processor', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [
-        BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE }),
-        BullModule.registerQueue({ name: MAIL_QUEUE }),
+        BullModule.registerQueue({ name: REPORTS_BUILDER_QUEUE, connection: {} }),
+        BullModule.registerQueue({ name: MAIL_QUEUE, connection: {} }),
       ],
       providers: [ReportsService, ReportsBuilderProcessor, MailService],
     })

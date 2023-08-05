@@ -62,10 +62,10 @@ export class ReportsService {
     });
   }
 
-  async build(buildReportDto: BuildReportDto): Promise<void> {
+  async build(buildReportDto: BuildReportDto): Promise<Report> {
     const job = await this.reportsQueue.add(REPORT_BUILDER_JOB, buildReportDto);
 
-    await this.create({
+    return this.create({
       name: job.data.name,
       params: job.data.params,
       jobId: job.id,
