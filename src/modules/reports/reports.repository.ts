@@ -56,4 +56,9 @@ export class ReportsRepository {
     const { where } = params;
     return this.prisma.report.delete({ where });
   }
+
+  async deleteReports(params: { where?: Prisma.ReportWhereUniqueInput }): Promise<Prisma.BatchPayload> {
+    const { where } = params;
+    return this.prisma.report.deleteMany({ where });
+  }
 }

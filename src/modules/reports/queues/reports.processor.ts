@@ -32,14 +32,14 @@ export class ReportsBuilderProcessor extends WorkerHost {
 
     const itemCount = 3;
     const steps = Array(itemCount).fill(0);
-    const delay = 4000;
+    const delay = 100;
 
     for await (const [idx, step] of steps.entries()) {
       try {
         await new Promise((resolve, reject) => {
           setTimeout(() => {
             if (job.data.name === '') {
-              return reject(new Error('Failed'));
+              return reject(new Error('Report name should not be empty'));
             }
 
             const progressPercent = Math.round((idx + 1) * (1 / itemCount) * 100);
