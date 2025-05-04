@@ -6,6 +6,8 @@ import { MailModule } from './modules/mail/mail.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { z } from 'zod';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
 
 @Module({
   imports: [
@@ -29,6 +31,10 @@ import { z } from 'zod';
 
         return configValidationSchema.parse(config);
       },
+    }),
+    BullBoardModule.forRoot({
+      route: '/queues',
+      adapter: ExpressAdapter,
     }),
     BullModule.forRootAsync({
       inject: [ConfigService],

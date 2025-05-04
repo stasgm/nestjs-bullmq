@@ -7,6 +7,8 @@ import { ReportsBuilderProcessor } from './queues/reports.processor';
 import { MailModule } from '../mail/mail.module';
 import { PersistenceModule } from '../_core/persistence/persistence.module';
 import { ReportsRepository } from './reports.repository';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 // import { join } from 'path';
 
 @Module({
@@ -21,6 +23,10 @@ import { ReportsRepository } from './reports.repository';
       //     path: join(__dirname, 'reports.processor.js'),
       //   },
       // ],
+    }),
+    BullBoardModule.forFeature({
+      name: REPORTS_BUILDER_QUEUE,
+      adapter: BullMQAdapter,
     }),
   ],
   controllers: [ReportsController],

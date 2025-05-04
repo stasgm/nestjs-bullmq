@@ -6,7 +6,7 @@ import { CreateReportDto } from './dto/create-report.dto';
 
 @Injectable()
 export class ReportsRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   getReport(params: { where: Prisma.ReportWhereUniqueInput }): Promise<Report | null> {
     const { where } = params;

@@ -71,8 +71,8 @@ describe('Reports Service', () => {
   it('should add a new job to the reports queue', async () => {
     repository.createReport.mockResolvedValue(reportDataMock);
     queue.add.mockResolvedValue(reportJob);
-
     await service.build({ name: 'report-1', params: reportJobData });
+
     expect(queue.add).toHaveBeenCalledTimes(1);
   });
 });

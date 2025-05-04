@@ -1,15 +1,15 @@
 services:
   redis:
     container_name: redis-bullmq
-    image: redis:7.0.12-alpine
+    image: redis:7.4.3-alpine
     ports:
       - '${REDIS_PORT}:6379'
     command: redis-server --save 60 1 --loglevel warning
 
   postgres:
-    image: postgres:13.5
+    image: postgres:16.8
     container_name: postgres-bullmq
-    restart: always
+    restart: "no"
     ports:
       - '${DB_PORT}:5432'
     env_file:

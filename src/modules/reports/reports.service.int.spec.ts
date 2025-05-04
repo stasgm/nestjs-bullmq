@@ -12,6 +12,7 @@ import { MailModule } from '../mail/mail.module';
 import { MailService } from '../mail/mail.service';
 import { PersistenceModule } from '../_core/persistence/persistence.module';
 import { MAIL_QUEUE } from '../mail/queues/mail.constants';
+import { BullBoardModule } from '@bull-board/nestjs';
 
 const reportJobData: { id: string; data: reportParamsT } = {
   id: '1',
@@ -31,7 +32,7 @@ describe('Reports Service', () => {
   let queueEvents: QueueEvents;
 
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [
@@ -63,6 +64,8 @@ describe('Reports Service', () => {
     })
       .overrideProvider(MailService)
       .useValue(mockDeep<MailService>())
+      .overrideProvider(BullBoardModule)
+      .useValue(mockDeep<BullBoardModule>())
       .compile();
 
     await module.init();
@@ -73,18 +76,16 @@ describe('Reports Service', () => {
     queueEvents = new QueueEvents(REPORTS_BUILDER_QUEUE, {
       connection: queue.opts.connection,
     });
+
+    // Remove test db data
+    await repository.deleteReports({});
+    // Remove test queues data
+    await removeAllQueueData(await queue.client, REPORTS_BUILDER_QUEUE);
+    await removeAllQueueData(await queue.client, MAIL_QUEUE);
   });
 
   afterEach(async () => {
-    queueEvents.close();
-  });
-
-  beforeEach(async () => {
-    // remove db test data
-    await repository.deleteReports({});
-    // Remove Redis bullmq test queues data
-    await removeAllQueueData(await queue.client, REPORTS_BUILDER_QUEUE);
-    await removeAllQueueData(await queue.client, MAIL_QUEUE);
+    await queueEvents.close();
   });
 
   it('should be defined', () => {

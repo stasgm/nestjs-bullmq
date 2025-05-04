@@ -36,33 +36,46 @@ export class MailProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('completed')
-  async onCompleted({ id, data }: { id: string; data: object }) {
+  async onCompleted({ id }: { id: string; data: object }) {
     // set 'emailsend' flag for the corresponding entry in the reports table
 
-    this.logger.log(`Completed event on ${MAIL_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+    this.logger.log(`Completed event on ${MAIL_QUEUE}, Job with id: ${id}`);
   }
 
   @OnWorkerEvent('failed')
-  onFailed({ id, data }: { id: string; data: number | object }) {
-    this.logger.error(`Failed event on ${MAIL_QUEUE}, Job with id: ${id} and args: ${JSON.stringify(data)}`);
+  onFailed({ id }: { id: string; data: number | object }) {
+    this.logger.error(`Failed event on ${MAIL_QUEUE}, Job with id: ${id}`);
   }
 
   private async setTransport() {
+    const clientId = this.configService.get('GOOGLE_API_CLIENT_ID');
+    const clientSecret = this.configService.get('GOOGLE_API_CLIENT_SECRET');
+    const refreshToken = this.configService.get('GOOGLE_API_REFRESH_TOKEN');
+    const email = this.configService.get('GOOGLE_API_EMAIL');
+
+    if (!clientId || !clientSecret || !refreshToken || !email) {
+      throw new Error('Missing required Google OAuth2 configuration');
+    }
+
     const OAuth2 = google.auth.OAuth2;
     const oauth2Client = new OAuth2({
-      clientId: this.configService.get('GOOGLE_API_CLIENT_ID'),
-      clientSecret: this.configService.get('GOOGLE_API_CLIENT_SECRET'),
+      clientId,
+      clientSecret,
       redirectUri: 'https://developers.google.com/oauthplayground',
     });
 
     oauth2Client.setCredentials({
-      refresh_token: this.configService.get('GOOGLE_API_REFRESH_TOKEN'),
+      refresh_token: refreshToken,
     });
 
     const accessToken: string = await new Promise((resolve, reject) => {
       oauth2Client.getAccessToken((err, token) => {
         if (err) {
-          reject('Failed to create access token');
+          this.logger.error('Failed to create access token', err);
+          reject(new Error(`Failed to create access token: ${err.message}`));
+        }
+        if (!token) {
+          reject(new Error('Access token is undefined'));
         }
         resolve(token);
       });
@@ -72,9 +85,9 @@ export class MailProcessor extends WorkerHost {
       service: 'gmail',
       auth: {
         type: 'OAuth2',
-        user: this.configService.get('GOOGLE_API_EMAIL'),
-        clientId: this.configService.get('GOOGLE_CLIENT_ID'),
-        clientSecret: this.configService.get('GOOGLE_CLIENT_SECRET'),
+        user: email,
+        clientId,
+        clientSecret,
         accessToken,
       },
     };
