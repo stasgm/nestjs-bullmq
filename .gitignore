@@ -39,3 +39,6 @@ lerna-debug.log*
 
 # Prisma clien
 generated
+
+# Typescript
+tsconfig.build.tsbuildinfo

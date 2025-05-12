@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, Report } from '@prisma/client';
 
-import { PrismaService } from '../_core/persistence/prisma/prisma.service';
-import { CreateReportDto } from './dto/create-report.dto';
+import { PrismaService } from '@/modules/core/persistence/prisma/prisma.service';
+import { CreateReport } from './reports.types';
 
 @Injectable()
 export class ReportsRepository {
@@ -30,16 +30,18 @@ export class ReportsRepository {
     });
   }
 
-  async createReport(params: { data: CreateReportDto }): Promise<Report> {
+  async createReport(params: { data: CreateReport }): Promise<Report> {
     const { data } = params;
+
+    const path = `/${data.name}-${data.startedBy}-${Date.now()}.pdf`;
 
     return this.prisma.report.create({
       data: {
         name: data.name,
         params: data.params,
-        path: data.path,
-        jobId: data.jobId,
-        status: 'created',
+        path,
+        status: 'created', // TODO: add enum (via const)
+        startedBy: data.startedBy,
       },
     });
   }

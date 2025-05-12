@@ -32,6 +32,22 @@
       "options": {
         "cwd": "${workspaceFolder}",
       }
+    },
+    {
+      "label": "✨ prisma gen",
+      "command": "pnpm",
+      "args": ["prisma:generate"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+      }
+    },
+    {
+      "label": "📦 build",
+      "command": "pnpm",
+      "args": ["build"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+      }
     }
   ]
 }

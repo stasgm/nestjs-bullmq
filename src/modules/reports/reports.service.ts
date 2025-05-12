@@ -1,13 +1,11 @@
-import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
-import { Queue } from 'bullmq';
 import { Report } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
-import { REPORT_BUILDER_JOB, REPORTS_BUILDER_QUEUE } from './queues/reports.constants';
-import { ReportsRepository } from './reports.repository';
-import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportDto } from './dto/update-report.dto';
-import { BuildReportDto } from './dto/build-report.dto';
+import { REPORTS_QUEUE } from '@/modules/core/jobs/producers/producers.types';
+import { JobsProducersService } from '@/modules/core/jobs/producers/producers.service';
+import { ReportsRepository } from '@/modules/reports/reports.repository';
+import { BuildReportDto } from '@/modules/reports/dto/build-report.dto';
 
 export interface ReportWithStatus extends Report {
   progress: number;
@@ -16,65 +14,81 @@ export interface ReportWithStatus extends Report {
 @Injectable()
 export class ReportsService {
   constructor(
-    @InjectQueue(REPORTS_BUILDER_QUEUE) private readonly reportsQueue: Queue,
-    private productsRepository: ReportsRepository,
+    private readonly jobsProducersService: JobsProducersService,
+    private readonly reportsRepository: ReportsRepository,
   ) {}
 
-  async findAll(): Promise<ReportWithStatus[]> {
-    const reports = await this.productsRepository.getReports({});
+  async findAll(params: { status?: string }): Promise<ReportWithStatus[]> {
+    // TODO: add additional filters
+    const reports = await this.reportsRepository.getReports({ where: { status: params.status } });
 
-    const reportList: ReportWithStatus[] = [];
-    for await (const report of reports) {
-      const job = await this.reportsQueue.getJob(report.jobId);
-      if (job) {
-        reportList.push({ ...report, progress: job.progress as number });
-      }
-    }
-
-    return reportList;
+    return reports.map((report) => ({
+      ...report,
+      progress: 0, // TODO: get progress from job
+      // progress: job?.progress as number ?? 0,
+    }));
+    // return Promise.all(
+    //   reports.map(async (report) => {
+    //     const job = await this.jobsProducersService.getJob(REPORTS_QUEUE, report.jobId);
+    //     return {
+    //       ...report,
+    //       progress: (job?.progress as number) ?? 0,
+    //     };
+    //   }),
+    // );
   }
 
   findById(id: string): Promise<Report | null> {
-    return this.productsRepository.getReport({ where: { id } });
-  }
-
-  create(createReportDto: CreateReportDto): Promise<Report> {
-    return this.productsRepository.createReport({ data: createReportDto });
-  }
-
-  update(id: string, updateReportDto: UpdateReportDto): Promise<Report | null> {
-    return this.productsRepository.updateReport({
-      where: { id },
-      data: updateReportDto,
-    });
+    return this.reportsRepository.getReport({ where: { id } });
   }
 
   remove(id: string): Promise<Report | null> {
-    return this.productsRepository.deleteReport({ where: { id } });
+    // TODO: implement soft delete
+    return this.reportsRepository.deleteReport({ where: { id } });
   }
 
-  updateStatusByJobId(jobId: string, status: string): Promise<Report | null> {
-    return this.productsRepository.updateReport({
-      where: { jobId: jobId },
+  async updateStatusById(id: string, status: string): Promise<Report | null> {
+   return this.reportsRepository.updateReport({
+      where: { id },
+      data: { status },
+    });
+  }
+
+  async build({ createdBy = 'system', ...buildReportDto }: BuildReportDto & { createdBy?: string }): Promise<Report> {
+    // TODO: implement taking createdBy from request
+
+    const report = await this.reportsRepository.createReport({
       data: {
-        status,
+        name: buildReportDto.name,
+        params: buildReportDto.params,
+        startedBy: createdBy,
       },
     });
+
+    await this.jobsProducersService.insertNewJob({
+      name: REPORTS_QUEUE,
+      data: { createdBy, ...buildReportDto, reportId: report.id },
+    });
+
+    return report;
   }
 
-  async build(buildReportDto: BuildReportDto): Promise<Report> {
-    const job = await this.reportsQueue.add(REPORT_BUILDER_JOB, buildReportDto);
-
-    return this.create({
-      name: job.data.name,
-      params: job.data.params,
-      jobId: job.id,
-      path: `./${job.data.name}-${job.id}`,
-    });
+  async pauseBuild(id: string): Promise<void> {
+    const job = await this.jobsProducersService.getJob(REPORTS_QUEUE, id);
+    if (!job) {
+      throw new Error(`Job with id ${id} not found`);
+    }
+    // job.moveToWait()
   }
 
   async stopBuild(id: string): Promise<void> {
-    const job = await this.reportsQueue.getJob(id);
-    job.discard();
+    const job = await this.jobsProducersService.getJob(REPORTS_QUEUE, id);
+
+    if (!job) {
+      throw new Error(`Job with id ${id} not found`);
+    }
+
+    const token = randomUUID();
+    job.moveToFailed(new Error('Job stopped manually'), token);
   }
 }

@@ -8,7 +8,8 @@ export class ReportsController {
 
   @Get()
   findAll() {
-    return this.reportsService.findAll();
+    // TODO: add additional filters
+    return this.reportsService.findAll({});
   }
 
   @Get(':id')
@@ -34,6 +35,6 @@ export class ReportsController {
 
   @Post('stop-building')
   stopBuilidng(@Param('id') id: string) {
-    this.reportsService.remove(id);
+    this.reportsService.stopBuild(id);
   }
 }

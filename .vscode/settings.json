@@ -1,8 +1,10 @@
 {
   "jest.autoRun": {
-    "jest.runAllTestsFirst": false,
+    "jest.runAllTestsFirst": false
   },
   "jest.showCoverageOnLoad": false,
   "json.schemaDownload.enable": true,
   "json.validate.enable": false,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative"
 }

@@ -1,35 +1,13 @@
 import { Module } from '@nestjs/common';
+import { MailModule } from '@/modules/mail/mail.module';
+import { ReportsRepository } from './reports.repository';
 import { ReportsService } from './reports.service';
 import { ReportsController } from './reports.controller';
-import { BullModule } from '@nestjs/bullmq';
-import { REPORTS_BUILDER_QUEUE } from './queues/reports.constants';
-import { ReportsBuilderProcessor } from './queues/reports.processor';
-import { MailModule } from '../mail/mail.module';
-import { PersistenceModule } from '../_core/persistence/persistence.module';
-import { ReportsRepository } from './reports.repository';
-import { BullBoardModule } from '@bull-board/nestjs';
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
-// import { join } from 'path';
 
 @Module({
-  imports: [
-    MailModule,
-    PersistenceModule,
-    BullModule.registerQueue({
-      name: REPORTS_BUILDER_QUEUE,
-      // processors: [
-      //   {
-      //     concurrency: 3,
-      //     path: join(__dirname, 'reports.processor.js'),
-      //   },
-      // ],
-    }),
-    BullBoardModule.forFeature({
-      name: REPORTS_BUILDER_QUEUE,
-      adapter: BullMQAdapter,
-    }),
-  ],
+  imports: [MailModule],
   controllers: [ReportsController],
-  providers: [ReportsService, ReportsBuilderProcessor, ReportsRepository],
+  providers: [ReportsService, ReportsRepository],
+  exports: [ReportsService],
 })
 export class ReportsModule {}

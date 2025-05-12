@@ -3,7 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/client"
+  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
@@ -12,13 +12,12 @@ datasource db {
 }
 
 model Report {
-  id     String @id @default(uuid())
-  name   String
-  params Json
-  status String
-  path   String
-  jobId  String @unique
-  // who started
-  // when started
-  // when updated
+  id        String   @id @default(uuid())
+  name      String
+  params    Json
+  status    String
+  path      String
+  startedBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
